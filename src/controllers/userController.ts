@@ -48,22 +48,46 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-export const profile = (req: Request, res: Response): void => {
-    // req.user was added by jwtGuard middleware
-    const user = req.user;
+export const profile = async (req: Request, res: Response) => {
+    const decoded = req.user;
 
-    if (!user || typeof user === 'string') {
+    if (!decoded || typeof decoded === 'string' || !('id' in decoded)) {
         res.status(401).json({ message: 'Invalid token payload' });
         return;
     }
 
-    res.json({
-        message: 'Protected route accessed',
-        user: {
-            id: user.id,
-            username: user.username
-        },
-    });
+    try {
+        // exclude password
+        const user = await User.findById(decoded.id).select('-password');
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        res.json({
+            message: 'Profile fetched',
+            user,
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const getUserProfile = async (req: Request, res: Response) => {
+    const { username } = req.params;
+    console.log('Headers:', req);
+
+    try {
+        const user = await User.findOne({ username }).select('-password');
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        res.json({ message: 'User profile', user });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
 };
 
 export const logout = (_req: Request, res: Response) => {
