@@ -4,10 +4,16 @@ import { jwtGuard } from '../middleware/jwtGuard';
 
 const router = Router();
 
+// Public routes
 router.post('/register', register);
 router.post('/login', login);
-router.get('/profile', jwtGuard, profile);
-router.get('/profile/:username', jwtGuard, getUserProfile);
-router.post('/logout', jwtGuard, logout);
+
+// Protected routes (can do it two ways)
+router.use(jwtGuard);
+
+router.get('/profile', profile);
+// router.get('/profile', jwtGuard, profile);
+router.get('/profile/:username', getUserProfile);
+router.post('/logout', logout);
 
 export default router;
