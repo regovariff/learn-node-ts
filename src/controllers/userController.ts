@@ -38,6 +38,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // create access token
         const token = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET!, {
             expiresIn: '4h',
         });
