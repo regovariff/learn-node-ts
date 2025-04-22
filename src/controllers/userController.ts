@@ -72,23 +72,42 @@ export const profile = async (req: Request, res: Response) => {
     }
 };
 
-export const getUserProfile = async (req: Request, res: Response) => {
-    const { username } = req.params;
+// export const getUserProfile = async (req: Request, res: Response) => {
+//     const { username } = req.params;
+
+//     try {
+//         const user = await userService.findUserByUsername(username);
+//         if (!user) {
+//             res.status(404).json({ message: 'User not found' });
+//             return;
+//         }
+
+//         res.json({ message: 'User profile', user });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// };
+
+export const logout = (_req: Request, res: Response) => {
+    res.json({ message: 'Token revoked (handled on client)' });
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+    const decoded = req.user;
+
+    if (!decoded || typeof decoded === 'string' || !('id' in decoded)) {
+        res.status(401).json({ message: 'Invalid token payload' });
+        return;
+    }
+
+    const { email, fullname, bio, skills, password } = req.body;
 
     try {
-        const user = await userService.findUserByUsername(username);
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        res.json({ message: 'User profile', user });
+        const updatedUser = await userService.updateUserProfile(decoded.id, { email, fullname, bio, skills, password });
+        res.json({ message: 'Profile updated', user: updatedUser });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
-};
-
-export const logout = (_req: Request, res: Response) => {
-    res.json({ message: 'Token revoked (handled on client)' });
 };

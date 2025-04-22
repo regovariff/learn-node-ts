@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, profile, logout, getUserProfile } from '../controllers/userController';
+import { register, login, profile, logout, updateProfile } from '../controllers/userController';
 import { jwtGuard } from '../middleware/jwtGuard';
 
 const router = Router();
@@ -12,8 +12,9 @@ router.post('/login', login);
 router.use(jwtGuard);
 
 router.get('/profile', profile);
+router.put('/profile', updateProfile);
 // router.get('/profile', jwtGuard, profile);
-router.get('/profile/:username', getUserProfile);
+// router.get('/profile/:username', getUserProfile);
 router.post('/logout', logout);
 
 export default router;
