@@ -1,12 +1,29 @@
 /**
- * NON RELATIONAL DB
+ * RELATIONAL DB model is defined in schema.prisma
  */
 
-import mongoose from 'mongoose';
+/**
+ * Prisma handles:
+ * Relationships (@relation)
+ * Foreign keys (fields, references)
+ * Types (String, Int, DateTime, etc.)
+ * Defaults (@default(now()), @default(autoincrement()))
+ * Constraints (@unique, @id, etc.)
+ */
 
-const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-});
+/*
+// can also do this if using raw sql without prisma
 
-export default mongoose.model('User', UserSchema);
+export const findUserByUsername = async (username: string) => {
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    return result.rows[0];
+};
+
+export const createUser = async (username: string, hashedPassword: string) => {
+    const result = await pool.query(
+        'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *',
+        [username, hashedPassword]
+    );
+    return result.rows[0];
+};
+*/
