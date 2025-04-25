@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import * as userService from '../services/userService';
 
 declare module 'express' {
     export interface Request {
@@ -7,7 +8,7 @@ declare module 'express' {
     }
 }
 
-export const jwtGuard = (req: Request, res: Response, next: NextFunction): void => {
+export const jwtGuard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const header = req.headers['authorization'];
 
     if (!header || !header.startsWith('Bearer ')) {
@@ -25,10 +26,15 @@ export const jwtGuard = (req: Request, res: Response, next: NextFunction): void 
     }
 
     try {
-        const decoded = jwt.verify(token, secretKey);
+        const decoded = jwt.verify(token, secretKey) as JwtPayload;
         // Attach decoded token payload
         req.user = decoded;
-        console.log('JWT verified:', decoded);
+
+        const user = await userService.findUserById(Number(decoded.id));
+        if (!user || user.current_token !== token) {
+            res.status(403).json({ message: 'Session invalid or expired. Please log in again.' });
+            return;
+        }
         next();
     } catch (error) {
         res.status(403).json({ message: 'Forbidden: Invalid token' });

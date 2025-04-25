@@ -39,9 +39,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Check for existing active token
+        if (user.current_token) {
+            res.status(403).json({
+                message: 'You are already logged in on another device. Please logout first.',
+            });
+            return;
+        }
+
         const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET!, {
             expiresIn: '4h',
         });
+
+        await userService.updateCurrentToken(user.id, token);
 
         res.json({ message: 'Login successful', token });
     } catch (err) {
@@ -49,6 +59,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// logout if 2 devices
+// profile pic in db
+// status (like linkedin)
 
 export const profile = async (req: Request, res: Response) => {
     const decoded = req.user;
@@ -65,7 +79,8 @@ export const profile = async (req: Request, res: Response) => {
             return;
         }
 
-        res.json({ message: 'Profile fetched', user });
+        const { current_token, ...safeUser } = user;
+        res.json({ message: 'Profile fetched', user: safeUser });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
@@ -89,9 +104,9 @@ export const profile = async (req: Request, res: Response) => {
 //     }
 // };
 
-export const logout = (_req: Request, res: Response) => {
-    res.json({ message: 'Token revoked (handled on client)' });
-};
+// export const logout = (_req: Request, res: Response) => {
+//     res.json({ message: 'Token revoked (handled on client)' });
+// };
 
 export const updateProfile = async (req: Request, res: Response) => {
     const decoded = req.user;
@@ -101,11 +116,29 @@ export const updateProfile = async (req: Request, res: Response) => {
         return;
     }
 
-    const { email, fullname, bio, skills, password } = req.body;
+    const { email, fullname, bio, skills, password, profile_picture } = req.body;
 
     try {
-        const updatedUser = await userService.updateUserProfile(decoded.id, { email, fullname, bio, skills, password });
-        res.json({ message: 'Profile updated', user: updatedUser });
+        const updatedUser = await userService.updateUserProfile(decoded.id, { email, fullname, bio, skills, password, profile_picture });
+
+        const { current_token, ...safeUser } = updatedUser;
+        res.json({ message: 'Profile updated', user: safeUser });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const logout = async (req: Request, res: Response) => {
+    const decoded = req.user;
+    if (!decoded || typeof decoded === 'string' || !('id' in decoded)) {
+        res.status(401).json({ message: 'Invalid token payload' });
+        return;
+    }
+
+    try {
+        await userService.clearCurrentToken(decoded.id);
+        res.json({ message: 'Logged out successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
