@@ -1,4 +1,4 @@
-import { pool } from "../lib/db";
+import { pool } from '../lib/db';
 
 export const createStatus = async (userId: number, message: string) => {
     const result = await pool.query(
@@ -27,7 +27,7 @@ export const deleteStatus = async (userId: number, statusId: number) => {
 export const getAllStatuses = async () => {
     const result = await pool.query(`
         SELECT 
-            s.id, s.message, s.created_at, u.username 
+            s.id, s.message, s.created_at, s.user_id, u.username
         FROM 
             "Status" s
         JOIN 
